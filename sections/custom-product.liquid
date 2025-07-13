@@ -30,6 +30,7 @@
               {% for variant in product.variants %}
                 {
                   "id": {{ variant.id }},
+                  "available": {{ variant.available | json }},
                   "price": "{{ variant.price | money }}"{% for i in (1..product.options.size) %}{% assign opt = 'option' | append: i %},
                   "{{ opt }}": "{{ variant[opt] | escape }}"{% endfor %}
                 }{% unless forloop.last %},{% endunless %}
@@ -81,7 +82,7 @@
             {% endif %}
         
             <div id="event-form-error" class="error" style="display:none;"></div>
-            <button class="event-btn" type="submit">Купити</button>
+            <button class="event-btn" type="submit" id="event-buy-btn">Купити</button>
           </form>
       {% endcase %}
     {% endfor %}
