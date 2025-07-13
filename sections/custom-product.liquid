@@ -1,0 +1,336 @@
+{% comment %}
+  Custom Event Product Section
+  - 2 колонки: слева картинка, справа блоки (title, description, price, variant, форма, кнопка)
+  - Все элементы реализованы через blocks (порядок drag&drop через Customizer)
+  - Варианты продукта и динамическая цена
+  - Форма персональных данных (сохраняются как line_item.properties)
+  - Всё на кастомных классах
+{% endcomment %}
+
+<style>
+.custom-event-section {
+  display: flex;
+  gap: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+.custom-event-section__left, .custom-event-section__right {
+  flex: 1 1 0;
+}
+.custom-event-section__left img {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.04);
+}
+.event-variants { margin-bottom: 20px; }
+.event-form input,
+.event-form select {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+.event-form label { font-weight: 500; margin-bottom: 4px; display: block; }
+.event-form .form-row { margin-bottom: 16px; }
+.event-form .error { color: #d00; font-size: 14px; }
+.event-btn {
+  background: #1478f2; color: #fff; border: none; border-radius: 6px; padding: 13px 28px; font-weight: 700;
+  transition: background 0.2s; cursor: pointer; margin-top: 12px; width: 100%;
+}
+.event-btn:hover { background: #0c5bcf; }
+@media (max-width: 800px) {
+  .custom-event-section { flex-direction: column; gap: 24px; padding: 20px;}
+}
+  .custom-variant-picker {
+  margin-bottom: 24px;
+}
+.variant-group {
+  margin-bottom: 20px;
+}
+.variant-group-label {
+  font-size: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.variant-btn {
+  border: 2px solid #222;
+  background: #fff;
+  color: #222;
+  border-radius: 22px;
+  padding: 8px 22px;
+  font-weight: 600;
+  font-size: 17px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+  margin-bottom: 0;
+  min-width: 80px;
+  text-align: center;
+  box-shadow: none;
+  user-select: none;
+}
+.variant-btn.active,
+.variant-btn:focus {
+  background: #222;
+  color: #fff;
+  border: 2px solid #222;
+}
+.variant-btn[disabled], .variant-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f4f4f4;
+  color: #aaa;
+  border: 2px solid #ddd;
+}
+@media (max-width: 600px) {
+  .variant-btn {
+    font-size: 15px;
+    padding: 7px 16px;
+    min-width: 65px;
+  }
+}
+
+</style>
+<div class="custom-event-section">
+  <div class="custom-event-section__left">
+    {% for block in section.blocks %}
+      {% if block.type == 'product_image' %}
+        {% if product.featured_image %}
+          <img 
+            src="{{ product.featured_image | image_url: width: 600 }}" 
+            width="{{ product.featured_image.width }}" height="{{ product.featured_image.height }}"
+            alt="{{ product.title | escape }}">
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="custom-event-section__right">
+    {% for block in section.blocks %}
+      {% case block.type %}
+        {% when 'product_title' %}
+          <h1 class="event-title">{{ product.title }}</h1>
+        {% when 'product_description' %}
+          <div class="event-description">{{ product.description }}</div>
+        {% when 'product_price' %}
+          <div class="event-price" id="event-price">
+            {{ product.selected_or_first_available_variant.price | money }}
+          </div>
+        {% when 'variant_selector' %}
+        {% if product.variants.size > 1 %}
+           <script id="variants-data" type="application/json">
+            [
+              {% for variant in product.variants %}
+                {
+                  "id": {{ variant.id }},
+                  "price": "{{ variant.price | money }}"{% for i in (1..product.options.size) %}{% assign opt = 'option' | append: i %},
+                  "{{ opt }}": "{{ variant[opt] | escape }}"{% endfor %}
+                }{% unless forloop.last %},{% endunless %}
+              {% endfor %}
+            ]
+          </script>
+          <div class="custom-variant-picker">
+            {% for option in product.options_with_values %}
+              {% assign opt_idx = forloop.index0 %}
+              <div class="variant-group" data-option-index="{{ opt_idx }}">
+                <div class="variant-group-label">{{ option.name }}</div>
+                <div class="variant-options">
+                  {% for value in option.values %}
+                    <button
+                      type="button"
+                      class="variant-btn{% if forloop.first %} active{% endif %}"
+                      data-option-index="{{ opt_idx }}"
+                      data-value="{{ value | escape }}"
+                      {% if forloop.first %}data-default="true"{% endif %}
+                    >{{ value }}</button>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+.
+        {% endif %} 
+        
+        {% when 'checkout_form' %}
+          <form id="event-form" class="event-form" autocomplete="off">
+            <input type="hidden" name="id" id="variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+        
+            {% if block.settings.show_customer_form %}
+              <div class="form-row"><input type="text" name="properties[First name]" required placeholder="Ім’я"></div>
+              <div class="form-row"><input type="text" name="properties[Last name]" required placeholder="Прізвище*"></div>
+              <div class="form-row"><input type="email" name="properties[Email]" required placeholder="Емейл адреса*"></div>
+              <div class="form-row"><input type="tel" name="properties[Phone]" required placeholder="Номер телефону*" імейл адреси></div>
+              <div class="form-row"><input type="text" name="properties[Postal code]" required placeholder="Поштовий код*"></div>
+              <div class="form-row"><label>Дата народження*</label><input type="date" name="properties[Birth date]" required></div>
+              <div class="form-row"><label>Стать*</label>
+                <select name="properties[Gender]" required >
+                  <option value="">Обери...</option>
+                  <option>Чоловіча</option>
+                  <option>Жіноча</option>
+                  <option>Інше</option>
+                </select>
+              </div>
+              <div class="form-row"><input type="text" name="properties[User code]" placeholder="Код користувача"></div>
+            {% endif %}
+        
+            <div id="event-form-error" class="error" style="display:none;"></div>
+            <button class="event-btn" type="submit">Купити</button>
+          </form>
+      {% endcase %}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  // Price update
+  const priceBox = document.getElementById('event-price');
+  const variantSelect = document.getElementById('event-variant');
+  if (priceBox && variantSelect) {
+    variantSelect.addEventListener('change', function() {
+      const selected = variantSelect.options[variantSelect.selectedIndex];
+      if (selected && selected.dataset.price && priceBox) {
+        priceBox.innerText = selected.dataset.price + ' {{ cart.currency.symbol }}';
+      }
+    });
+  }
+
+  // Handle form submit
+  const form = document.getElementById('event-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      let valid = true;
+      let msg = '';
+      form.querySelectorAll('input[required], select[required]').forEach(input => {
+          debugger
+        if (!input.value.trim()) { valid = false; msg = 'Please fill all required fields.'; }
+      });
+      if (!valid) {
+        document.getElementById('event-form-error').style.display = '';
+        document.getElementById('event-form-error').innerText = msg;
+        return;
+      } else {
+        document.getElementById('event-form-error').style.display = 'none';
+      }
+      const fd = new FormData(form);
+      for (let [key, value] of fd.entries()) {
+        console.log(key, value);
+      }
+      debugger
+      fetch('/cart/add.js', {
+        method: 'POST',
+        body: fd,
+        headers: { 'Accept': 'application/json' }
+      }).then(res => res.json())
+        .then(data => {
+          debugger
+          if (data.status && data.status !== 200) {
+            // Ошибка с описанием Shopify (например, товар распродан)
+            document.getElementById('event-form-error').style.display = '';
+            document.getElementById('event-form-error').innerText = data.description || 'Ошибка при добавлении товара.';
+            debugger
+            return;
+          }
+          // Показываем confirmation на 1-2 секунды и только потом редиректим
+          document.getElementById('event-form-error').style.display = 'none';
+          let info = document.createElement('div');
+          info.innerText = "Товар добавлен! Переходим к чекауту...";
+          info.style = "color:green;margin:10px 0;font-weight:600;";
+          form.parentNode.insertBefore(info, form);
+          debugger
+          setTimeout(() => {
+            window.location = '/checkout';
+          }, 1200);
+        })
+        .catch(err => {
+          document.getElementById('event-form-error').style.display = '';
+          document.getElementById('event-form-error').innerText = 'Ошибка добавления в корзину. Попробуйте ещё раз.';
+        });
+    });
+  }
+});
+
+  document.addEventListener('DOMContentLoaded', function() {
+     // Получаем варианты из JSON (Liquid генерирует)
+  const variants = JSON.parse(document.getElementById('variants-data').textContent);
+  const variantIdInput = document.getElementById('variant-id');
+  const priceBox = document.getElementById('event-price');
+  const optionGroups = document.querySelectorAll('.variant-group');
+  const optionCount = optionGroups.length;
+  let selectedOptions = [];
+
+  // Установка дефолтных (первых) значений
+  optionGroups.forEach((group, idx) => {
+    const firstBtn = group.querySelector('.variant-btn');
+    if (firstBtn) {
+      firstBtn.classList.add('active');
+      selectedOptions[idx] = firstBtn.dataset.value;
+    }
+  });
+
+  function findVariantId() {
+    return variants.find(v => {
+      for (let i = 0; i < optionCount; i++) {
+        if (v['option' + (i+1)] !== selectedOptions[i]) return false;
+      }
+      return true;
+    });
+  }
+
+  document.querySelectorAll('.variant-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const optionIdx = parseInt(this.dataset.optionIndex, 10);
+      // Снимаем active с других кнопок этой группы
+      this.parentNode.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      selectedOptions[optionIdx] = this.dataset.value;
+
+      // Поиск нужного варианта и обновление цены/id
+      const found = findVariantId();
+      if (found) {
+        variantIdInput.value = found.id;
+        if(priceBox) priceBox.innerText = found.price;
+      }
+    });
+  });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Custom Event Product",
+  "tag": "section",
+  "settings": [],
+  "blocks": [
+    { "type": "product_image", "name": "Product image", "limit": 1 },
+    { "type": "product_title", "name": "Title", "limit": 1 },
+    { "type": "product_description", "name": "Description", "limit": 1 },
+    { "type": "product_price", "name": "Price", "limit": 1 },
+    { "type": "variant_selector", "name": "Variant selector", "limit": 1 },
+    { "type": "checkout_form", 
+      "name": "Checkout form", 
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_customer_form",
+          "label": "Show customer form",
+          "default": true
+        }
+      ]
+    }
+  ],
+  "max_blocks": 6,
+  "presets": [{ "name": "Custom Event Product" }]
+}
+{% endschema %}
