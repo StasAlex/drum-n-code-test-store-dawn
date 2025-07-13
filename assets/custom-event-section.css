@@ -1,0 +1,98 @@
+.custom-event-section {
+    display: flex;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 0;
+}
+.custom-event-section__left, .custom-event-section__right {
+    flex: 1 1 0;
+}
+.custom-event-section__left img {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.04);
+}
+.event-variants { margin-bottom: 20px; }
+.event-form input,
+.event-form select {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+.event-form label { font-weight: 500; margin-bottom: 4px; display: block; }
+.event-form .form-row { margin-bottom: 16px; }
+.event-form .error { color: #d00; font-size: 14px; }
+.event-btn {
+    background: #1478f2; color: #fff; border: none; border-radius: 6px; padding: 13px 28px; font-weight: 700;
+    transition: background 0.2s; cursor: pointer; margin-top: 12px; width: 100%;
+}
+.event-btn:hover { background: #0c5bcf; }
+@media (max-width: 800px) {
+    .custom-event-section { flex-direction: column; gap: 24px; padding: 20px;}
+}
+.custom-variant-picker {
+    margin-bottom: 24px;
+}
+.variant-group {
+    margin-bottom: 20px;
+}
+.variant-group-label {
+    font-size: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.variant-btn {
+    border: 2px solid #222;
+    background: #fff;
+    color: #222;
+    border-radius: 22px;
+    padding: 8px 22px;
+    font-weight: 600;
+    font-size: 17px;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.15s, color 0.15s, border 0.15s;
+    margin-bottom: 0;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: none;
+    user-select: none;
+}
+.variant-btn.active,
+.variant-btn:focus {
+    background: #222;
+    color: #fff;
+    border: 2px solid #222;
+}
+.variant-btn[disabled], .variant-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f4f4f4;
+    color: #aaa;
+    border: 2px solid #ddd;
+}
+.event-btn.soldout {
+    background: #ccc;
+    color: #fff;
+    border: 2px solid #999;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+@media (max-width: 600px) {
+    .variant-btn {
+        font-size: 15px;
+        padding: 7px 16px;
+        min-width: 65px;
+    }
+}
